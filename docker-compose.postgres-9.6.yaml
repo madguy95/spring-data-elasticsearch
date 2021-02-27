@@ -1,0 +1,65 @@
+version: '3.7'
+services: 
+  postgres:
+    image: postgres:12.5
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - 5442:5432
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    networks: 
+      - share-network
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+    ports:
+      - 9301:9300
+      - 9201:9200
+    environment:
+      - http.cors.enabled=true
+      - http.cors.allow-origin=*
+      - http.cors.allow-methods=OPTIONS,HEAD,GET,POST,PUT,DELETE
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - transport.host=127.0.0.1
+      - cluster.name=docker-cluster
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - share-network
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.3.2
+    ports:
+      - 5601:5601
+    networks:
+      - share-network
+    depends_on:
+      - elasticsearch
+  logstash:
+    build: 
+      dockerfile: ${PWD}/Dockerfile
+      context: ${PWD}/
+    environment:
+      - LOGSTASH_JDBC_URL=jdbc:postgresql://postgres:5432/postgres
+      - LOGSTASH_JDBC_DRIVER=org.postgresql.Driver
+      - LOGSTASH_JDBC_DRIVER_JAR_LOCATION=/usr/share/logstash/logstash-core/lib/jars/postgresql.jar
+      - LOGSTASH_JDBC_USERNAME=postgres
+      - LOGSTASH_JDBC_PASSWORD=password
+      - LOGSTASH_ELASTICSEARCH_HOST=http://elasticsearch:9200
+    volumes: 
+      - ./postgres-jdbc-input.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - 9600:9600
+      - 5044:5044
+    networks:
+      - share-network
+    depends_on:
+      - elasticsearch
+      - kibana
+      - postgres
+
+networks:
+  share-network:
