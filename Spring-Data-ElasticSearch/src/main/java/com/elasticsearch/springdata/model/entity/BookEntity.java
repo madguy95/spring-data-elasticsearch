@@ -1,17 +1,17 @@
 package com.elasticsearch.springdata.model.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-
-@Document(indexName = "books", type = "book")
 @Entity
 @Table(name = "Book")
 public class BookEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String title;
@@ -22,6 +22,11 @@ public class BookEntity {
 
     private String isbn;
 
+    
+    public void setId(Long id) {
+    	this.id = id;
+    }
+    
     public Long getId() {
         return id;
     }

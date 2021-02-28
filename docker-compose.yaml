@@ -9,25 +9,25 @@ services:
     ports:
       - 5442:5432
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks: 
       - share-network
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     ports:
       - 9301:9300
       - 9201:9200
     environment:
-      - http.cors.enabled=true
-      - http.cors.allow-origin=*
-      - http.cors.allow-methods=OPTIONS,HEAD,GET,POST,PUT,DELETE
-      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
-      - transport.host=127.0.0.1
+      - node.name=es01
       - cluster.name=docker-cluster
-      - discovery.type=single-node
+      - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     volumes:
-      - ./elasticsearch_data:/usr/share/elasticsearch/data
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     networks:
       - share-network
   kibana:
@@ -61,5 +61,24 @@ services:
       - kibana
       - postgres
 
+volumes:
+  elasticsearch_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./elasticsearch_data
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./postgres_data
+  es02_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./es02_data
 networks:
   share-network:
