@@ -66,7 +66,10 @@ public class DefaultBookService implements BookService {
     @Override
     public List<Book> findByTitleAndAuthor(String title, String author) {
         BoolQueryBuilder criteria = QueryBuilders.boolQuery();
-        criteria.must().addAll(Arrays.asList(QueryBuilders.matchQuery("authorName", author), QueryBuilders.matchQuery("title", title)));
+        criteria.should().addAll(Arrays.asList(QueryBuilders.matchPhrasePrefixQuery("authorName", author), 
+        		QueryBuilders.matchPhrasePrefixQuery("title", title),
+        		QueryBuilders.matchQuery("authorName", author), 
+        		QueryBuilders.matchQuery("title", title)));
         SearchSourceBuilder builder = new SearchSourceBuilder();
         builder.query(criteria);
 
