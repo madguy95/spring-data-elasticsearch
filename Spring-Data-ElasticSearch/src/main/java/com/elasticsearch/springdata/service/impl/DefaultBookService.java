@@ -2,6 +2,9 @@ package com.elasticsearch.springdata.service.impl;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortMode;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
@@ -56,8 +59,13 @@ public class DefaultBookService implements BookService {
     @Override
     public List<Book> findByTitleAndAuthor(String title, String author) {
         BoolQueryBuilder criteria = QueryBuilders.boolQuery();
-        criteria.must().addAll(Arrays.asList(QueryBuilders.matchQuery("authorName", author), QueryBuilders.matchQuery("title", title)));
-        return elasticsearchTemplate.queryForList(new NativeSearchQueryBuilder().withQuery(criteria).build(), Book.class);
+        criteria.should().addAll(Arrays.asList(
+        		QueryBuilders.matchPhrasePrefixQuery("authorName", author),
+        		QueryBuilders.matchPhrasePrefixQuery("title", title),
+        		QueryBuilders.matchQuery("authorName", author),
+        		QueryBuilders.matchQuery("title", title)));
+        return elasticsearchTemplate.queryForList(new NativeSearchQueryBuilder().withQuery(criteria)
+        		.withSort(SortBuilders.fieldSort("authorName.raw").order(SortOrder.DESC)).build(), Book.class);
     }
 
     @Override
